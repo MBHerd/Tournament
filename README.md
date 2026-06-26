@@ -1,2 +1,2 @@
 # Tournament
-Creating my tournament management app
+Where the Himsog.Life Tournament Management web app lives.
