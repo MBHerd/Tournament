@@ -12,6 +12,7 @@ const navItems = [
   ["/", "Dashboard"],
   ["/admin", "Platform"],
   ["/schema", "Schema"],
+  ["/deploy", "Deploy"],
   ["/org/gingoog-pickleball", "Organization"],
   ["/t/gingoog-open-2026", "Public"],
   ["/login", "Login"]

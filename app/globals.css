@@ -61,6 +61,8 @@ main { width: min(1380px, 100%); margin: 0 auto; padding: 22px clamp(14px, 3vw, 
 }
 .hero h2 { max-width: 860px; margin: 0 0 10px; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 1; }
 .hero p { max-width: 760px; margin: 0; color: rgba(255, 255, 255, 0.9); }
+.hero.compact { min-height: 230px; }
+.hero.compact h2 { font-size: clamp(1.8rem, 4vw, 3.1rem); }
 
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(245px, 1fr)); gap: 14px; }
 .grid.two { grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr); }
@@ -98,7 +100,13 @@ tr:last-child td { border-bottom: 0; }
 .form-grid { display: grid; gap: 12px; }
 label { display: grid; gap: 5px; color: var(--muted); font-size: 0.82rem; font-weight: 700; }
 input { min-height: 40px; border: 1px solid var(--line); border-radius: 7px; padding: 8px 10px; color: var(--ink); }
-.primary { border: 0; border-radius: 7px; background: var(--green); color: #fff; min-height: 40px; padding: 8px 12px; font-weight: 700; }
+.primary { width: 100%; border: 0; border-radius: 7px; background: var(--green); color: #fff; min-height: 40px; padding: 8px 12px; font-weight: 700; cursor: pointer; }
+.primary:disabled { background: #93a49b; cursor: not-allowed; }
+.blue-button { background: var(--blue); }
+code { font-family: Consolas, "Liberation Mono", monospace; font-size: 0.92em; }
+.notice { border: 1px solid var(--line); border-radius: 7px; padding: 10px 12px; font-weight: 700; }
+.notice.amber { color: var(--amber); border-color: #e5c18e; background: #fff6e6; }
+.notice.red { color: var(--red); border-color: #e2b3b3; background: #fff0f0; }
 
 @media (max-width: 880px) {
   .app-header { align-items: flex-start; flex-direction: column; }

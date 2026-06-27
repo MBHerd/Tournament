@@ -4,6 +4,8 @@ Foundation build for a multi-organization pickleball tournament management app.
 
 This project is intentionally scoped to the first implementation phase from the ChatGPT prompt: clean app structure, auth/RBAC foundation, organization and tournament shells, PostgreSQL schema, seed/demo data, audit logging, PWA assets, and tested domain rules for the mini tournament flow.
 
+The deployment build is prepared for Vercel and Supabase: Vercel hosts the Next.js app, while Supabase provides PostgreSQL, Auth, Storage, and Row Level Security.
+
 ## What Is Included
 
 - Next.js / React app structure using the App Router.
@@ -16,6 +18,9 @@ This project is intentionally scoped to the first implementation phase from the 
 - Node built-in tests for the important tournament rules.
 - PWA manifest, icon, and service worker placeholder for cached pages and queued score submissions.
 - Schema explorer page at `/schema` showing table groups, status catalogs, data separation rules, and public privacy fields.
+- Supabase SSR auth clients, middleware session refresh, email/password login, Google OAuth redirect flow, and hosted environment readiness page at `/deploy`.
+- Supabase RLS and Storage migration for organization-scoped access control.
+- Vercel project configuration and deployment documentation.
 
 ## Local Setup
 
@@ -30,6 +35,7 @@ This project is intentionally scoped to the first implementation phase from the 
 3. Run database migration and seed when PostgreSQL is available:
 
        npm run db:migrate
+       npm run db:rls
        npm run db:seed
 
 4. Start the app:
@@ -47,6 +53,14 @@ The domain and schema test suite can run without a database server:
        node --test tests/*.test.mjs
 
 Current coverage checks RBAC, organization separation, pool/match generation, score validation, score approval, standings, bracket seeding, audit immutability, migration table coverage, suggested indexes, submitted-vs-official result separation, and public privacy sanitizers.
+
+## Deployment
+
+- Supabase setup: [docs/supabase-setup.md](docs/supabase-setup.md)
+- Vercel deployment: [docs/vercel-deployment.md](docs/vercel-deployment.md)
+- Hosted readiness page: `/deploy`
+
+Required hosted values are listed in `.env.example`. Keep `DATABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` server-only. Only values beginning with `NEXT_PUBLIC_` should be considered browser-safe.
 
 Production build was verified with Next.js 15 by invoking the installed Next CLI directly with the available Node runtime. In a normal shell with Node on PATH, `npm run build` or `pnpm build` should use the same Next build path.
 
