@@ -1,8 +1,23 @@
 import Link from "next/link";
 import { createTournamentFromDirectorSetup } from "@/app/admin/create/actions";
-import { getPrimarySnapshot } from "@/src/lib/tournament-data";
+import { isSupabaseConfigured } from "@/src/lib/env";
+import { createSupabaseAdminClient } from "@/src/lib/supabase/admin";
+import { createSupabaseServerClient } from "@/src/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
+
+type OrganizationOption = {
+  id: string;
+  name: string;
+  contact_email: string | null;
+  contact_phone: string | null;
+};
+
+type CreateContext = {
+  state: "ready" | "signed_out" | "not_configured" | "no_organization";
+  userEmail: string | null;
+  organizations: OrganizationOption[];
+};
 
 type CreatePageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -12,13 +27,71 @@ function firstParam(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
 
+async function getCreateContext(): Promise<CreateContext> {
+  if (!isSupabaseConfigured() || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return { state: "not_configured", userEmail: null, organizations: [] };
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+
+  if (!user) return { state: "signed_out", userEmail: null, organizations: [] };
+
+  const admin = createSupabaseAdminClient();
+  const email = user.email ?? `${user.id}@supabase.local`;
+  const { data: appUser } = await admin
+    .from("users")
+    .upsert(
+      {
+        supabase_auth_user_id: user.id,
+        auth_provider_id: user.id,
+        email,
+        name: user.user_metadata?.name ?? user.user_metadata?.full_name ?? email,
+        updated_at: new Date().toISOString()
+      },
+      { onConflict: "email" }
+    )
+    .select("id, platform_role")
+    .single();
+
+  if (!appUser) return { state: "no_organization", userEmail: email, organizations: [] };
+
+  if (appUser.platform_role === "platform_admin") {
+    const { data } = await admin.from("organizations").select("id, name, contact_email, contact_phone").order("name");
+    const organizations = (data ?? []) as OrganizationOption[];
+    return { state: organizations.length ? "ready" : "no_organization", userEmail: email, organizations };
+  }
+
+  const { data: memberships } = await admin
+    .from("organization_memberships")
+    .select("organization_id")
+    .eq("user_id", appUser.id)
+    .eq("status", "active")
+    .in("role", ["organization_owner", "tournament_director"]);
+
+  const organizationIds = [...new Set((memberships ?? []).map((membership) => String(membership.organization_id)).filter(Boolean))];
+  if (!organizationIds.length) return { state: "no_organization", userEmail: email, organizations: [] };
+
+  const { data } = await admin
+    .from("organizations")
+    .select("id, name, contact_email, contact_phone")
+    .in("id", organizationIds)
+    .order("name");
+
+  const organizations = (data ?? []) as OrganizationOption[];
+  return { state: organizations.length ? "ready" : "no_organization", userEmail: email, organizations };
+}
+
 export default async function CreateTournamentPage({ searchParams }: CreatePageProps) {
   const params = await searchParams;
   const created = firstParam(params?.created);
   const error = firstParam(params?.error);
-  const snapshot = await getPrimarySnapshot();
-  const { organization } = snapshot;
+  const context = await getCreateContext();
+  const organization = context.organizations[0];
   const createdUrl = created ? `/t/${created}` : null;
+  const canCreate = context.state === "ready";
 
   return (
     <>
@@ -26,10 +99,8 @@ export default async function CreateTournamentPage({ searchParams }: CreatePageP
         <h2>Create Tournament</h2>
         <p>Build the tournament, courts, format, division, pools, and public settings in one director setup.</p>
         <div className="badges">
-          <span className={snapshot.source === "supabase" ? "badge green" : "badge amber"}>
-            {snapshot.source === "supabase" ? "Live Supabase data" : "Demo fallback"}
-          </span>
-          <span className="badge blue">{organization.name}</span>
+          <span className={canCreate ? "badge green" : "badge amber"}>{canCreate ? "Ready to create" : "Setup needed"}</span>
+          <span className="badge blue">{organization?.name ?? context.userEmail ?? "Sign in required"}</span>
         </div>
       </section>
 
@@ -39,17 +110,32 @@ export default async function CreateTournamentPage({ searchParams }: CreatePageP
         </div>
       ) : null}
       {error ? <div className="notice red">{error}</div> : null}
-      {snapshot.source !== "supabase" ? <div className="notice amber">Sign in with Supabase connected before creating a live tournament.</div> : null}
+      {context.state === "not_configured" ? <div className="notice amber">Supabase environment variables are missing for this deployment.</div> : null}
+      {context.state === "signed_out" ? (
+        <div className="notice amber">Sign in first, then come back here to create a tournament. <Link href="/login?next=/admin/create">Open login</Link>.</div>
+      ) : null}
+      {context.state === "no_organization" ? (
+        <div className="notice amber">Your account is not an organization owner or tournament director yet. Open <Link href="/admin">Admin</Link> to create or join an organization.</div>
+      ) : null}
 
       <form action={createTournamentFromDirectorSetup} className="setup-layout">
-        <input type="hidden" name="organizationId" value={snapshot.source === "supabase" ? organization.id : ""} />
-
         <section className="panel setup-main">
           <div className="panel-header">
             <h2>Tournament</h2>
-            <p>{organization.name}</p>
+            <p>{organization?.name ?? "Choose an organization after signing in"}</p>
           </div>
           <div className="panel-body form-grid">
+            <div className="form-section">
+              <h3>Organization</h3>
+              {canCreate ? (
+                <label>Organization<select name="organizationId" defaultValue={organization?.id}>
+                  {context.organizations.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+                </select></label>
+              ) : (
+                <input type="hidden" name="organizationId" value="" />
+              )}
+            </div>
+
             <div className="form-section">
               <h3>Profile</h3>
               <div className="form-grid two-column">
@@ -65,8 +151,8 @@ export default async function CreateTournamentPage({ searchParams }: CreatePageP
                   <option value="registration_closed">Registration closed</option>
                   <option value="in_progress">In progress</option>
                 </select></label>
-                <label>Contact email<input name="contactEmail" type="email" defaultValue={organization.contact_email ?? ""} /></label>
-                <label>Contact phone<input name="contactPhone" defaultValue={organization.contact_phone ?? ""} /></label>
+                <label>Contact email<input name="contactEmail" type="email" defaultValue={organization?.contact_email ?? ""} /></label>
+                <label>Contact phone<input name="contactPhone" defaultValue={organization?.contact_phone ?? ""} /></label>
               </div>
               <label>Description<textarea name="tournamentDescription" rows={3} /></label>
               <label>Rules summary<textarea name="rulesSummary" rows={3} defaultValue="Traditional doubles pool play into a single-elimination bracket." /></label>
@@ -216,7 +302,7 @@ export default async function CreateTournamentPage({ searchParams }: CreatePageP
 
           <section className="panel">
             <div className="panel-body actions stacked">
-              <button className="primary" type="submit">Create tournament</button>
+              <button className="primary" type="submit" disabled={!canCreate}>Create tournament</button>
               <Link className="secondary-action" href="/admin">Back to admin</Link>
               <Link className="secondary-action" href="/admin/operations">Open operations</Link>
             </div>

@@ -161,14 +161,15 @@ export async function createTournamentFromDirectorSetup(formData: FormData) {
   const context = await requireSetupContext();
   const { admin, appUser } = context;
   const organizationId = textValue(formData, "organizationId");
-  await ensureCreatorRole(context, organizationId);
 
   const tournamentName = textValue(formData, "tournamentName");
   const venueName = textValue(formData, "venueName");
   const divisionName = textValue(formData, "divisionName");
   if (!organizationId || !tournamentName || !venueName || !divisionName) {
-    redirect("/admin/create?error=Tournament%2C%20venue%2C%20and%20division%20names%20are%20required.");
+    redirect("/admin/create?error=Organization%2C%20tournament%2C%20venue%2C%20and%20division%20names%20are%20required.");
   }
+
+  await ensureCreatorRole(context, organizationId);
 
   const { data: organization } = await admin.from("organizations").select("id, slug").eq("id", organizationId).single();
   if (!organization?.id) redirect("/admin/create?error=Could%20not%20find%20that%20organization.");
