@@ -11,6 +11,7 @@ export const metadata: Metadata = {
 const navItems = [
   ["/", "Dashboard"],
   ["/admin", "Platform"],
+  ["/admin/operations", "Operations"],
   ["/schema", "Schema"],
   ["/deploy", "Deploy"],
   ["/org/gingoog-pickleball", "Organization"],

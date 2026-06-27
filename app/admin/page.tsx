@@ -118,6 +118,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
             <div className="actions">
               <button className="primary" type="submit">Save live changes</button>
+              <Link className="secondary-action" href="/admin/operations">Open operations</Link>
               <Link className="secondary-action" href={publicUrl}>View public page</Link>
               <Link className="secondary-action" href={orgUrl}>View organization</Link>
             </div>
@@ -147,6 +148,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         <div className="panel-header">
           <h2>Spreadsheet Interop</h2>
           <p>Download workbook-compatible CSVs for copy/paste, auditing, score sheets, and offline tournament operations.</p>
+        </div>
+        <div className="panel-body">
+          <Link className="secondary-action" href="/admin/operations">Paste imports, enter scores, and review standings</Link>
         </div>
         <div className="panel-body interop-grid">
           {exportDefinitions.map((item) => (

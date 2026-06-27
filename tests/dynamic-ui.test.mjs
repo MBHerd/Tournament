@@ -10,6 +10,8 @@ const orgPage = await readFile(new URL('../app/org/[orgSlug]/page.tsx', import.m
 const dataLayer = await readFile(new URL('../src/lib/tournament-data.ts', import.meta.url), 'utf8');
 const interopExports = await readFile(new URL('../src/lib/interop-exports.ts', import.meta.url), 'utf8');
 const exportRoute = await readFile(new URL('../app/admin/exports/[kind]/route.ts', import.meta.url), 'utf8');
+const operationsPage = await readFile(new URL('../app/admin/operations/page.tsx', import.meta.url), 'utf8');
+const operationsActions = await readFile(new URL('../app/admin/operations/actions.ts', import.meta.url), 'utf8');
 
 test('home, organization, admin, and public pages read the Supabase data layer', () => {
   assert.match(homePage, /getPrimarySnapshot/);
@@ -60,4 +62,17 @@ test('admin exposes spreadsheet-compatible CSV exports', () => {
   assert.match(interopExports, /Print\?/);
   assert.match(exportRoute, /text\/csv/);
   assert.match(exportRoute, /Sign in required/);
+});
+
+test('admin operations page imports spreadsheet rows and saves live scores', () => {
+  assert.match(adminPage, /\/admin\/operations/);
+  assert.match(operationsPage, /Paste From Spreadsheet/);
+  assert.match(operationsPage, /Live Score Entry/);
+  assert.match(operationsPage, /Standings/);
+  assert.match(operationsPage, /Bracket Control/);
+  assert.match(operationsActions, /importSpreadsheetRows/);
+  assert.match(operationsActions, /saveMatchScore/);
+  assert.match(operationsActions, /pool_teams/);
+  assert.match(operationsActions, /official_match_results/);
+  assert.match(operationsActions, /match_games/);
 });

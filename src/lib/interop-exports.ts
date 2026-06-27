@@ -261,6 +261,7 @@ export async function buildInteropCsv(kind: ExportKind) {
     teamsRes,
     playersRes,
     teamPlayersRes,
+    poolTeamsRes,
     matchesRes,
     courtsRes,
     formatsRes,
@@ -274,6 +275,7 @@ export async function buildInteropCsv(kind: ExportKind) {
     supabase.from("teams").select("*").eq("tournament_id", tournamentId).order("seed", { nullsFirst: false }),
     supabase.from("players").select("*").order("last_name"),
     supabase.from("team_players").select("*").order("role"),
+    supabase.from("pool_teams").select("*"),
     supabase.from("matches").select("*").eq("tournament_id", tournamentId).order("planned_start_time", { nullsFirst: false }).order("human_match_id"),
     supabase.from("courts").select("*").eq("tournament_id", tournamentId).order("sort_order"),
     supabase.from("match_formats").select("*").eq("organization_id", organizationId),
@@ -288,6 +290,7 @@ export async function buildInteropCsv(kind: ExportKind) {
   const teams = (teamsRes.data ?? []) as Record<string, CsvCell>[];
   const players = (playersRes.data ?? []) as Record<string, CsvCell>[];
   const teamPlayers = (teamPlayersRes.data ?? []) as Record<string, CsvCell>[];
+  const poolTeams = (poolTeamsRes.data ?? []) as Record<string, CsvCell>[];
   const matches = (matchesRes.data ?? []) as Record<string, CsvCell>[];
   const courts = (courtsRes.data ?? []) as Record<string, CsvCell>[];
   const formats = (formatsRes.data ?? []) as Record<string, CsvCell>[];
@@ -303,6 +306,7 @@ export async function buildInteropCsv(kind: ExportKind) {
   const courtsById = new Map(courts.map((row) => [String(row.id), row]));
   const formatsById = new Map(formats.map((row) => [String(row.id), row]));
   const gamesByMatch = latestGameByMatch(games);
+  const poolByTeamId = new Map(poolTeams.map((row) => [String(row.team_id), poolsById.get(String(row.pool_id))]));
   const teamPlayerNames = new Map<string, { player1: string; player2: string; contact: string }>();
 
   for (const link of teamPlayers) {
@@ -360,7 +364,7 @@ export async function buildInteropCsv(kind: ExportKind) {
       filename: definition.filename,
       csv: toCsv(teamHeaders, teams.map((team, index) => {
         const division = divisionsById.get(String(team.division_id));
-        const poolTeam = pools.find((pool) => team.id && String(pool.id) === String(team.pool_id));
+        const poolTeam = poolByTeamId.get(String(team.id));
         const playerNames = teamPlayerNames.get(String(team.id)) ?? { player1: "", player2: "", contact: "" };
         return {
           "Skill Group": String(division?.name ?? ""),
@@ -484,8 +488,8 @@ export async function buildInteropCsv(kind: ExportKind) {
     csv: toCsv(auditHeaders, audit.map((row) => ({
       timestamp: row.created_at,
       actor: row.actor_user_id,
-      action: row.action,
-      detail: row.summary,
+      action: row.action_type,
+      detail: row.reason,
       auditId: row.id
     })))
   };
