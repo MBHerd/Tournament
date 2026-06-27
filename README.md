@@ -20,6 +20,8 @@ The deployment build is prepared for Vercel and Supabase: Vercel hosts the Next.
 - Schema explorer page at `/schema` showing table groups, status catalogs, data separation rules, and public privacy fields.
 - Supabase SSR auth clients, middleware session refresh, email/password login, Google OAuth redirect flow, and hosted environment readiness page at `/deploy`.
 - Supabase RLS and Storage migration for organization-scoped access control.
+- Live admin editor at `/admin` for saving organization, venue, and tournament profile changes to Supabase.
+- Dynamic home, organization, and public tournament pages that read saved Supabase records.
 - Vercel project configuration and deployment documentation.
 
 ## Local Setup
@@ -61,6 +63,14 @@ Current coverage checks RBAC, organization separation, pool/match generation, sc
 - Hosted readiness page: `/deploy`
 
 Required hosted values are listed in `.env.example`. Keep `DATABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` server-only. Only values beginning with `NEXT_PUBLIC_` should be considered browser-safe.
+
+## Editing The App
+
+Sign in and open `/admin` to edit the live organization, venue, and tournament profile. Saving the form writes to Supabase, records an audit event, and updates:
+
+- `/`
+- `/org/[organization-slug]`
+- `/t/[tournament-slug]`
 
 Production build was verified with Next.js 15 by invoking the installed Next CLI directly with the available Node runtime. In a normal shell with Node on PATH, `npm run build` or `pnpm build` should use the same Next build path.
 

@@ -1,65 +1,52 @@
-import { miniTournamentDemo } from "@/src/domain/demo/mini-tournament.mjs";
-import { calculateStandings } from "@/src/domain/standings/calculate-standings.mjs";
-import { seedBracket } from "@/src/domain/brackets/seed-bracket.mjs";
-import { can } from "@/src/domain/auth/permissions.mjs";
+import Link from "next/link";
+import { formatDateRange, getPrimarySnapshot } from "@/src/lib/tournament-data";
 
-export default function HomePage() {
-  const demo = miniTournamentDemo();
-  const standings = calculateStandings({ teams: demo.teams, matches: demo.matches, officialScores: demo.officialScores });
-  const bracket = seedBracket({ standings, bracketSize: 4 });
-  const approvedScores = Object.keys(demo.officialScores).length;
-  const platformCanManageOrgs = can({ role: "Platform Admin" }, "organizations.manage");
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
+  const snapshot = await getPrimarySnapshot();
+  const { organization, tournament, venue, counts } = snapshot;
 
   return (
     <>
       <section className="hero">
-        <h2>Foundation for serious tournament operations.</h2>
-        <p>Multi-organization setup, role gates, PostgreSQL schema, audit logging, seed data, and tested tournament rules are in place for the Himsog.Life build.</p>
+        <h2>{tournament.name}</h2>
+        <p>{tournament.description || "Live tournament operations for Himsog.Life."}</p>
         <div className="badges">
-          <span className="badge green">Foundation phase</span>
-          <span className="badge blue">PostgreSQL ready</span>
-          <span className="badge amber">Mini tournament seeded</span>
+          <span className={snapshot.source === "supabase" ? "badge green" : "badge amber"}>{snapshot.source === "supabase" ? "Live Supabase data" : "Demo fallback"}</span>
+          <span className="badge blue">{organization.name}</span>
+          <span className="badge green">{formatDateRange(tournament)}</span>
         </div>
       </section>
 
       <section className="grid" style={{ marginTop: 16 }}>
-        <Metric title="Organizations" value="1" detail={demo.organization.name} />
-        <Metric title="Tournament" value="1" detail={demo.tournament.name} />
-        <Metric title="Teams" value={demo.teams.length} detail="Two pools of four" />
-        <Metric title="Approved scores" value={approvedScores} detail="Referee submissions retained separately" />
+        <Metric title="Organizations" value={counts.organizations} detail={organization.name} />
+        <Metric title="Tournament" value={counts.tournaments} detail={tournament.status.replaceAll("_", " ")} />
+        <Metric title="Teams" value={counts.teams} detail="Saved registrations" />
+        <Metric title="Matches" value={counts.matches} detail="Saved schedule rows" />
       </section>
 
       <section className="grid two">
-        <Panel title="Foundation Modules" subtitle="Clean boundaries for the modules named in the prompt">
+        <Panel title="Live Tournament" subtitle="This panel reads from Supabase on every request">
           <div className="grid">
-            {demo.modules.map((module: string) => <div className="card" key={module}><h3>{module}</h3><p>Domain boundary created for future server actions and database screens.</p></div>)}
+            <div className="card"><h3>Public URL</h3><strong>/{tournament.slug}</strong><p><Link href={`/t/${tournament.slug}`}>Open public tournament page</Link></p></div>
+            <div className="card"><h3>Organization</h3><strong>{organization.slug}</strong><p><Link href={`/org/${organization.slug}`}>Open organization workspace</Link></p></div>
+            <div className="card"><h3>Venue</h3><strong>{venue?.name ?? "Pending"}</strong><p>{[venue?.city, venue?.region].filter(Boolean).join(", ") || "Add venue details in Admin"}</p></div>
+            <div className="card"><h3>Results</h3><strong>{tournament.public_results_enabled ? "On" : "Off"}</strong><p>Controlled from the admin editor</p></div>
           </div>
         </Panel>
-        <Panel title="Role Gates" subtitle="Practical RBAC starts at the app edge">
-          <table>
-            <tbody>
-              <tr><td>Platform Admin</td><td>{platformCanManageOrgs ? <Badge tone="green">can manage organizations</Badge> : <Badge tone="red">blocked</Badge>}</td></tr>
-              <tr><td>Referee</td><td>{can({ role: "Referee" }, "scores.submit") ? <Badge tone="green">can submit scores</Badge> : <Badge tone="red">blocked</Badge>}</td></tr>
-              <tr><td>Public Viewer</td><td>{can({ role: "Public Viewer" }, "scores.approve") ? <Badge tone="red">over-permitted</Badge> : <Badge tone="green">cannot approve scores</Badge>}</td></tr>
-            </tbody>
-          </table>
+
+        <Panel title="Admin Actions" subtitle="Start here when you want to change the app">
+          <div className="actions stacked">
+            <Link className="primary text-button" href="/admin">Edit tournament profile</Link>
+            <Link className="secondary-action" href="/login">Sign in</Link>
+            <Link className="secondary-action" href="/deploy">Deployment readiness</Link>
+          </div>
         </Panel>
       </section>
 
-      <Panel title="Demo Mini Tournament" subtitle="Eight teams, two pools, generated standings, and four-team bracket seed">
-        <div className="table-wrap">
-          <table>
-            <thead><tr><th>Rank</th><th>Pool</th><th>Team</th><th>Wins</th><th>Point diff</th><th>Reason</th></tr></thead>
-            <tbody>
-              {standings.map((row: any) => (
-                <tr key={row.teamId}><td>{row.rank}</td><td>{row.pool}</td><td>{row.teamName}</td><td>{row.wins}</td><td>{row.pointDiff}</td><td>{row.reason}</td></tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="badges">
-          {bracket.seeds.map((seed: any) => <span className="badge blue" key={seed.seed}>Seed {seed.seed}: {seed.teamName}</span>)}
-        </div>
+      <Panel title="Rules Summary" subtitle="Public notes shown from the saved tournament record">
+        <p>{tournament.rules_summary || "Add rules and format notes in Admin."}</p>
       </Panel>
     </>
   );
@@ -71,8 +58,4 @@ function Metric({ title, value, detail }: { title: string; value: string | numbe
 
 function Panel({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
   return <section className="panel"><div className="panel-header"><h2>{title}</h2><p>{subtitle}</p></div><div className="panel-body">{children}</div></section>;
-}
-
-function Badge({ tone, children }: { tone: "green" | "blue" | "amber" | "red"; children: React.ReactNode }) {
-  return <span className={'badge ' + tone}>{children}</span>;
 }
