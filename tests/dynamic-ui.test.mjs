@@ -22,6 +22,14 @@ test('home, organization, admin, and public pages read the Supabase data layer',
   assert.doesNotMatch(publicPage, /miniTournamentDemo/);
 });
 
+test('home page opens with Himsog logo and role dashboard', () => {
+  assert.match(homePage, /himsog-logo-transparent\.png/);
+  assert.match(homePage, /role-dashboard/);
+  assert.match(homePage, /Tournament Director/);
+  assert.match(homePage, /Referee or Scorekeeper/);
+  assert.match(homePage, /Player or Team/);
+});
+
 test('admin page exposes a real save form for editable tournament data', () => {
   for (const field of [
     'organizationName',
