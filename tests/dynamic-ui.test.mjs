@@ -8,6 +8,8 @@ const homePage = await readFile(new URL('../app/page.tsx', import.meta.url), 'ut
 const publicPage = await readFile(new URL('../app/t/[tournamentSlug]/page.tsx', import.meta.url), 'utf8');
 const orgPage = await readFile(new URL('../app/org/[orgSlug]/page.tsx', import.meta.url), 'utf8');
 const dataLayer = await readFile(new URL('../src/lib/tournament-data.ts', import.meta.url), 'utf8');
+const interopExports = await readFile(new URL('../src/lib/interop-exports.ts', import.meta.url), 'utf8');
+const exportRoute = await readFile(new URL('../app/admin/exports/[kind]/route.ts', import.meta.url), 'utf8');
 
 test('home, organization, admin, and public pages read the Supabase data layer', () => {
   assert.match(homePage, /getPrimarySnapshot/);
@@ -46,4 +48,16 @@ test('data layer has live Supabase reads with demo fallback for local builds', (
   assert.match(dataLayer, /isSupabaseConfigured/);
   assert.match(dataLayer, /demoSnapshot/);
   assert.match(dataLayer, /source: "supabase"/);
+});
+
+test('admin exposes spreadsheet-compatible CSV exports', () => {
+  for (const exportName of ['teams', 'schedule', 'score-entry', 'standings', 'rankings', 'bracket', 'scoresheet-data', 'registrations', 'audit']) {
+    assert.match(interopExports, new RegExp(`kind: "${exportName}"`));
+    assert.match(adminPage, /Spreadsheet Interop/);
+  }
+  assert.match(interopExports, /Scoresheet Data/);
+  assert.match(interopExports, /Score Entry/);
+  assert.match(interopExports, /Print\?/);
+  assert.match(exportRoute, /text\/csv/);
+  assert.match(exportRoute, /Sign in required/);
 });

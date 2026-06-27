@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { signOut } from "@/app/auth/actions";
 import { saveTournamentProfile } from "@/app/admin/actions";
+import { exportDefinitions } from "@/src/lib/interop-exports";
 import { formatDateRange, getPrimarySnapshot } from "@/src/lib/tournament-data";
 
 export const dynamic = "force-dynamic";
@@ -140,6 +141,21 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             </form>
           </div>
         </section>
+      </section>
+
+      <section className="panel">
+        <div className="panel-header">
+          <h2>Spreadsheet Interop</h2>
+          <p>Download workbook-compatible CSVs for copy/paste, auditing, score sheets, and offline tournament operations.</p>
+        </div>
+        <div className="panel-body interop-grid">
+          {exportDefinitions.map((item) => (
+            <a key={item.kind} className="export-link" href={`/admin/exports/${item.kind}`}>
+              <strong>{item.label}</strong>
+              <span>{item.filename}</span>
+            </a>
+          ))}
+        </div>
       </section>
     </>
   );
