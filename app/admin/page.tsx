@@ -118,6 +118,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
             <div className="actions">
               <button className="primary" type="submit">Save live changes</button>
+              <Link className="secondary-action" href="/admin/create">Create tournament</Link>
               <Link className="secondary-action" href="/admin/operations">Open operations</Link>
               <Link className="secondary-action" href={publicUrl}>View public page</Link>
               <Link className="secondary-action" href={orgUrl}>View organization</Link>

@@ -12,6 +12,9 @@ const interopExports = await readFile(new URL('../src/lib/interop-exports.ts', i
 const exportRoute = await readFile(new URL('../app/admin/exports/[kind]/route.ts', import.meta.url), 'utf8');
 const operationsPage = await readFile(new URL('../app/admin/operations/page.tsx', import.meta.url), 'utf8');
 const operationsActions = await readFile(new URL('../app/admin/operations/actions.ts', import.meta.url), 'utf8');
+const createPage = await readFile(new URL('../app/admin/create/page.tsx', import.meta.url), 'utf8');
+const createActions = await readFile(new URL('../app/admin/create/actions.ts', import.meta.url), 'utf8');
+const layout = await readFile(new URL('../app/layout.tsx', import.meta.url), 'utf8');
 
 test('home, organization, admin, and public pages read the Supabase data layer', () => {
   assert.match(homePage, /getPrimarySnapshot/);
@@ -26,6 +29,7 @@ test('home page opens with Himsog logo and role dashboard', () => {
   assert.match(homePage, /himsog-logo-transparent\.png/);
   assert.match(homePage, /role-dashboard/);
   assert.match(homePage, /Tournament Director/);
+  assert.match(homePage, /\/admin\/create/);
   assert.match(homePage, /Referee or Scorekeeper/);
   assert.match(homePage, /Player or Team/);
 });
@@ -43,6 +47,41 @@ test('admin page exposes a real save form for editable tournament data', () => {
     assert.match(adminPage, new RegExp(`name="${field}"`), `${field} should be editable`);
   }
   assert.match(adminPage, /action=\{saveTournamentProfile\}/);
+});
+
+test('tournament director can create a tournament with setup variables from the outline', () => {
+  assert.match(layout, /\/admin\/create/);
+  assert.match(adminPage, /Create tournament/);
+  assert.match(createPage, /action=\{createTournamentFromDirectorSetup\}/);
+  for (const field of [
+    'plannedTeams',
+    'physicalCourts',
+    'virtualQueues',
+    'tournamentFormat',
+    'schedulingMode',
+    'poolMatchFormat',
+    'bracketMatchFormat',
+    'poolSize',
+    'teamsAdvance',
+    'wildcardCount',
+    'bronzeMatchEnabled',
+    'registrationOpensAt',
+    'registrationClosesAt',
+    'ageMethod',
+    'waiverText'
+  ]) {
+    assert.match(createPage, new RegExp(`name="${field}"`), `${field} should be available in the setup GUI`);
+  }
+});
+
+test('tournament creation action writes venue, courts, formats, division, pools, bracket, and audit records', () => {
+  assert.match(createActions, /requireSetupContext/);
+  assert.match(createActions, /ensureCreatorRole/);
+  for (const table of ['venues', 'tournaments', 'match_formats', 'courts', 'court_availability_blocks', 'divisions', 'pools', 'brackets', 'public_display_settings', 'audit_logs']) {
+    assert.match(createActions, new RegExp(`from\\("${table}"\\)`), `${table} should be written by setup action`);
+  }
+  assert.match(createActions, /planned_teams/);
+  assert.match(createActions, /scheduling_mode/);
 });
 
 test('admin save action requires auth and writes through Supabase server-side only', () => {

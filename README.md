@@ -20,6 +20,7 @@ The deployment build is prepared for Vercel and Supabase: Vercel hosts the Next.
 - Schema explorer page at `/schema` showing table groups, status catalogs, data separation rules, and public privacy fields.
 - Supabase SSR auth clients, middleware session refresh, email/password login, Google OAuth redirect flow, and hosted environment readiness page at `/deploy`.
 - Supabase RLS and Storage migration for organization-scoped access control.
+- Tournament director setup screen at `/admin/create` for creating a tournament with venue, courts, registration windows, match formats, division variables, pool settings, bracket settings, and audit logging.
 - Live admin editor at `/admin` for saving organization, venue, and tournament profile changes to Supabase.
 - Dynamic home, organization, and public tournament pages that read saved Supabase records.
 - Vercel project configuration and deployment documentation.
@@ -66,7 +67,7 @@ Required hosted values are listed in `.env.example`. Keep `DATABASE_URL` and `SU
 
 ## Editing The App
 
-Sign in and open `/admin` to edit the live organization, venue, and tournament profile. Saving the form writes to Supabase, records an audit event, and updates:
+Sign in and open `/admin/create` to create a new tournament from the director setup screen. Use `/admin` to edit the live organization, venue, and tournament profile. Saving either form writes to Supabase, records an audit event, and updates:
 
 - `/`
 - `/org/[organization-slug]`

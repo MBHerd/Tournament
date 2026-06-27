@@ -170,6 +170,11 @@ code { font-family: Consolas, "Liberation Mono", monospace; font-size: 0.92em; }
 .export-link:hover { border-color: #aeb9b1; }
 .export-link span { color: var(--muted); font-size: 0.82rem; overflow-wrap: anywhere; }
 .import-box { display: grid; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 7px; background: #fff; }
+.setup-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(340px, 0.45fr); gap: 16px; align-items: start; }
+.setup-main { min-width: 0; }
+.setup-side { display: grid; gap: 16px; align-self: start; }
+.setup-side .panel { margin-top: 0; }
+.compact-fields { gap: 10px; }
 .score-form { display: grid; grid-template-columns: 72px auto 72px 70px; align-items: center; gap: 6px; min-width: 250px; }
 .score-form input { min-height: 34px; padding: 6px 8px; }
 .score-form button { min-height: 34px; border: 1px solid var(--line); border-radius: 7px; background: var(--green); color: #fff; font-weight: 700; cursor: pointer; }
@@ -184,6 +189,7 @@ code { font-family: Consolas, "Liberation Mono", monospace; font-size: 0.92em; }
   .app-opening { min-height: auto; grid-template-columns: 1fr; padding: 22px; }
   .opening-logo { max-width: 290px; }
   .role-grid { grid-template-columns: 1fr; }
+  .setup-layout { grid-template-columns: 1fr; }
   .grid.two { grid-template-columns: 1fr; }
   .form-grid.two-column { grid-template-columns: 1fr; }
   .actions .primary, .secondary-action { width: 100%; }

@@ -32,7 +32,7 @@ export default async function HomePage() {
           <p>Start from the workspace that matches what you are doing right now.</p>
         </div>
         <div className="role-grid">
-          <RoleCard title="Tournament Director" detail="Profile, imports, scores, standings, and bracket control" href="/admin/operations" action="Open operations" />
+          <RoleCard title="Tournament Director" detail="Create tournaments, choose format variables, and run operations" href="/admin/create" action="Create or setup" />
           <RoleCard title="Registration Desk" detail="Teams, pasted spreadsheet rows, and workbook CSV exports" href="/admin" action="Open admin" />
           <RoleCard title="Referee or Scorekeeper" detail="Enter official scores and keep standings current" href="/admin/operations" action="Enter scores" />
           <RoleCard title="Player or Team" detail="Tournament details, schedule, and public results" href={publicUrl} action="View tournament" />

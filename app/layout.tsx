@@ -10,6 +10,7 @@ export const metadata: Metadata = {
 
 const navItems = [
   ["/", "Dashboard"],
+  ["/admin/create", "Create"],
   ["/admin", "Platform"],
   ["/admin/operations", "Operations"],
   ["/schema", "Schema"],
